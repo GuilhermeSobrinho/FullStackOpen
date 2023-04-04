@@ -1,0 +1,39 @@
+Create a similar diagram depicting the situation where the user creates a new note on the page https://studies.cs.helsinki.fi/exampleapp/notes by writing something into the text field and clicking the submit button.
+
+sequenceDiagram
+    participant browser
+    participant server
+
+    browser->>server: POST https://studies.cs.helsinki.fi/exampleapp/new_note
+    activate server
+
+    Note: POST with payload "231" submitted in the url
+
+    server-->>browser: GET request to https://studies.cs.helsinki.fi/exampleapp/notes
+    deactivate server
+
+    browser->>server: GET https://studies.cs.helsinki.fi/exampleapp/notes
+    activate server
+    server-->>browser: Return the HTML file 
+    deactivate server
+
+    browser->>server: GET https://studies.cs.helsinki.fi/exampleapp/main.css
+    activate server
+    server-->>browser: Return the CSS file (main.css)
+    deactivate server
+
+    browser->>server: GET https://studies.cs.helsinki.fi/exampleapp/main.js
+    activate server
+    server-->>browser: Return the Javascript file (main.js)
+    deactivate server
+
+    Note: Browser executes the main.js file that contains a GET to a server-side JSON file
+
+    browser->>server: GET https://studies.cs.helsinki.fi/exampleapp/data.json
+    activate server
+    server-->>browser: Return the data.json containing all data including the new note
+    deactivate server
+
+    Note: The browser executes the callback function that renders the notes
+
+   

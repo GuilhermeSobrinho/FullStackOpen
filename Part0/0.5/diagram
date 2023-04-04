@@ -1,0 +1,31 @@
+Create a diagram depicting the situation where the user goes to the single-page app version of the notes app at https://studies.cs.helsinki.fi/exampleapp/spa.
+
+sequenceDiagram
+    participant browser
+    participant server
+
+    browser->>server: GET https://studies.cs.helsinki.fi/exampleapp/spa
+    activate server
+    server-->>browser: Return the HTML file
+    deactivate server
+
+    browser->>server: GET https://studies.cs.helsinki.fi/exampleapp/main.css
+    activate server
+    server-->>browser: Return the CSS file (main.css)
+    deactivate server
+
+    browser->>server: GET https://studies.cs.helsinki.fi/exampleapp/spa.js
+    activate server
+    server-->>browser: Return the JS file (spa.js)
+    deactivate server
+
+    Note: Browser executes the spa.js file that contains a GET to a server-side JSON file
+
+    browser->>server: GET https://studies.cs.helsinki.fi/exampleapp/data.json
+    activate server
+    server-->>browser: Return the data.json containing all data
+    deactivate server
+
+    Note: The browser executes the callback function that renders the notes
+
+   
