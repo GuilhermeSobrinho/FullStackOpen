@@ -1,1 +1,1 @@
-SERVER -> https://phonebook-emms.onrender.com/
+phonebookApp -> https://phonebook-emms.onrender.com/

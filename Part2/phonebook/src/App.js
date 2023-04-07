@@ -10,7 +10,7 @@ const App = () => {
   const [newName, setNewName] = useState("");
   const [newNumber, setNewNumber] = useState("");
   const [newFilter, setNewFilter] = useState("");
-  const [message, setMessage] = useState(null)
+  const [message, setMessage] = useState(null);
 
   useEffect(() => {
     personService.get().then((personsData) => {
@@ -39,9 +39,7 @@ const App = () => {
             .then((returnedPerson) => {
               setPersons(
                 persons.map((personItem) =>
-                  personItem.id !== personId
-                    ? personItem
-                    : returnedPerson
+                  personItem.id !== personId ? personItem : returnedPerson
                 )
               );
             });
@@ -56,18 +54,19 @@ const App = () => {
           number: newNumber,
           id: id,
         };
-        personService
-          .create(personObject)
-          .then((returnedPerson) => setPersons(persons.concat(returnedPerson)));
+        personService.create(personObject).then((returnedPerson) =>
+          setPersons(persons.concat(returnedPerson)).catch((error) => {
+            console.log(error.response.data.error);
+          })
+        );
       }
     }
-    setMessage(`Added ${newName}`)
+    setMessage(`Added ${newName}`);
     setTimeout(() => {
-      setMessage(null)
-    }, 5000)
+      setMessage(null);
+    }, 5000);
     setNewName("");
     setNewNumber("");
-
   };
 
   const deletePerson = (id) => {
@@ -97,8 +96,8 @@ const App = () => {
 
   const personToShow = persons
     ? persons.filter((person) =>
-        person.name.toUpperCase().includes(newFilter.toUpperCase())
-      )
+      person.name.toUpperCase().includes(newFilter.toUpperCase())
+    )
     : persons;
 
   return (
