@@ -3,14 +3,6 @@ const Blog = require('../models/blog')
 const User = require('../models/user')
 const jwt = require('jsonwebtoken')
 
-const getTokenFrom = request => {
-  const authorization = request.get('authorization')
-  if (authorization && authorization.startsWith('Bearer ')) {
-    return authorization.replace('Bearer ', '')
-  }
-  return null
-}
-
 blogsRouter.get('/', async (request, response) => {
   const blogs = await Blog
     .find({}).populate('user', { username: 1, name: 1 })
@@ -29,15 +21,16 @@ blogsRouter.get('/:id', (request, response, next) => {
     .catch(error => next(error))
 })
 
-blogsRouter.post('/', async (request, response) => {
+blogsRouter.post('/', async (request, response, next) => {
   const body = request.body
 
-  const decodedToken = jwt.verify(getTokenFrom(request), process.env.SECRET)
-  if (!decodedToken.id) {
-    return response.status(401).json({ error: 'token invalid' })
-  }
+  const token = request.token
+  const decodedToken = jwt.verify(token, process.env.SECRET)
   const user = await User.findById(decodedToken.id)
-  
+  if (!body.likes) {
+    body.likes = 0
+  }
+
   const blog = new Blog({
     title: body.title,
     author: body.author,
@@ -46,36 +39,69 @@ blogsRouter.post('/', async (request, response) => {
     user: user._id
   })
 
-  const savedBlog = await blog.save()
-  user.blogs = user.blogs.concat(savedBlog._id)
-  await user.save()
-
-  response.json(savedBlog)
+  try {
+    const savedBlog = await blog.save()
+    logger.info(`added ${blog.title} to the blog list`)
+    user.blogs = user.blogs.concat(savedBlog._id)
+    await user.save()
+    logger.info(`blog linked to user ${user.username}`)
+    response.json(savedBlog.toJSON())
+  } catch (exception) {
+    next(exception)
+  }
 })
 
-blogsRouter.delete('/:id', (request, response, next) => {
-   Blog.findByIdAndRemove(request.params.id)
-    .then(() => {
+blogsRouter.delete('/:id', async (request, response, next) => {
+  const token = request.token
+  const decodedToken = jwt.verify(token, process.env.SECRET)
+
+  const user = await User.findById(decodedToken.id)
+
+  const blogToDelete = await Blog.findById(request.params.id)
+
+  if (blogToDelete.user._id.toString() === user._id.toString()) {
+    try {
+      await Blog.findByIdAndRemove(request.params.id)
       response.status(204).end()
-    })
-    .catch(error => next(error))
+    } catch (exception) {
+      next(exception)
+    }
+  } else {
+    return response.status(401).json({ error: `Unauthorized` })
+  }
 })
 
-blogsRouter.put('/:id', (request, response, next) => {
+blogsRouter.put('/:id', async (request, response, next) => {
   const body = request.body
 
-  const blog = new Blog({
-    title: body.title,
-    author: body.author,
-    url: body.url,
-    likes: body.likes
-  })
+  if (!body.likes) {
+    body.likes = 0
+  }
 
-  Blog.findByIdAndUpdate(request.params.id, blog, { new: true })
-    .then(updatedBlog => {
-      response.json(updatedBlog)
-    })
-    .catch(error => next(error))
+  const token = request.token
+  const decodedToken = jwt.verify(token, process.env.SECRET)
+  const user = await User.findById(decodedToken.id)
+
+  const blogToUpdate = await Blog.findById(request.params.id)
+
+  if (blogToUpdate.user._id.toString() === user._id.toString()) {
+    const blog = {
+      title: body.title,
+      author: body.author,
+      url: body.url,
+      likes: body.likes,
+    }
+
+    try {
+      const updatedBlog = await Blog.findByIdAndUpdate(request.params.id, blog, { new: true })
+      logger.info(`blog ${blog.title} successfully updated`)
+      response.json(updatedBlog.toJSON())
+    } catch (exception) {
+      next(exception)
+    }
+  } else {
+    return response.status(401).json({ error: `Unauthorized` })
+  }
 })
 
 module.exports = blogsRouter
